@@ -2,6 +2,29 @@ let tenders = [];
 let workspace = null;
 let activeLanguage = "en-IN";
 
+function unwrapTrpc(body) {
+  if (body.error) {
+    throw new Error(body.error.message || body.error.data?.message || "Request failed");
+  }
+  return body.result?.data?.json ?? body.result?.data;
+}
+
+async function trpcQuery(path, input) {
+  const url = new URL(`/trpc/${path}`, window.location.origin);
+  if (input !== undefined) url.searchParams.set("input", JSON.stringify(input));
+  const response = await fetch(url);
+  return unwrapTrpc(await response.json());
+}
+
+async function trpcMutate(path, input) {
+  const response = await fetch(`/trpc/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input ?? {}),
+  });
+  return unwrapTrpc(await response.json());
+}
+
 async function requestJson(url, options) {
   const response = await fetch(url, options);
   const body = await response.json();
@@ -11,7 +34,7 @@ async function requestJson(url, options) {
 
 async function loadCatalog() {
   document.getElementById("resultCount").textContent = "Loading active tenders...";
-  const data = await requestJson("/api/tenders");
+  const data = await trpcQuery("tenders.list");
   tenders = data.tenders;
   document.getElementById("lastUpdated").textContent = `Source checked ${new Date(data.updated_at).toLocaleString("en-IN")}`;
   document.getElementById("watchSummary").textContent = "Server-side change watch ready";
@@ -41,7 +64,7 @@ function renderCatalog() {
 }
 
 async function openWorkspace(tenderId) {
-  workspace = await requestJson(`/api/tenders/${encodeURIComponent(tenderId)}`);
+  workspace = await trpcQuery("tenders.getById", { id: tenderId });
   document.getElementById("workspace").hidden = false;
   document.getElementById("detailTitle").textContent = workspace.title;
   document.getElementById("detailMeta").textContent = workspace.authority;
@@ -52,10 +75,41 @@ async function openWorkspace(tenderId) {
   document.getElementById("documentList").innerHTML = workspace.documents.map((document) => `<a href="${document.url}" target="_blank" rel="noreferrer">${document.name}<span>${document.state} ↗</span></a>`).join("");
   document.querySelectorAll("#checklist input").forEach((input) => input.addEventListener("change", updateProgress));
   updateProgress();
-  document.getElementById("changeStatus").textContent = "Watching";
-  document.getElementById("changeContent").innerHTML = `<div class="empty-watch"><span>◌</span><p>${workspace.change_watch.message}</p></div>`;
+  document.getElementById("changeStatus").textContent = "Scraping";
+  document.getElementById("changeContent").innerHTML = `<div class="empty-watch"><span>◌</span><p>Anakin is opening the official tender page...</p></div>`;
   await translateWorkspace();
   document.getElementById("workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+  await loadAnakinIngest(tenderId);
+}
+
+function renderAnakin(anakin) {
+  const status = document.getElementById("changeStatus");
+  const content = document.getElementById("changeContent");
+  if (!anakin) {
+    status.textContent = "Unavailable";
+    content.innerHTML = `<div class="empty-watch"><span>◌</span><p>Anakin ingest did not return a payload.</p></div>`;
+    return;
+  }
+  status.textContent = anakin.scrape?.ok ? (anakin.usedFallback ? "Search fallback" : "Scraped") : "Fallback";
+  const contacts = anakin.contacts || {};
+  const emails = (contacts.emails || []).join(", ") || "Not found";
+  const phones = (contacts.phones || []).join(", ") || "Not found";
+  const department = contacts.department || anakin.search?.contacts?.department || "Not found";
+  const excerpt = anakin.excerpt || anakin.scrape?.fallbackMessage || anakin.message;
+  content.innerHTML = `<div class="change-entry"><strong>${anakin.message}</strong><p>${excerpt}</p><small>Department: ${department}<br />Email: ${emails}<br />Phone: ${phones}<br />Cache: ${anakin.scrape?.cached ? "hit" : "fresh"}${anakin.usedFallback ? " · Search used" : ""}</small></div>`;
+}
+
+async function loadAnakinIngest(tenderId) {
+  try {
+    const anakin = await trpcMutate("anakin.ingest", { tenderId });
+    workspace = { ...workspace, anakin };
+    if (anakin.excerpt) workspace.summary = anakin.excerpt;
+    await translateWorkspace();
+    renderAnakin(anakin);
+  } catch (error) {
+    document.getElementById("changeStatus").textContent = "Fallback";
+    document.getElementById("changeContent").innerHTML = `<div class="empty-watch"><span>◌</span><p>Anakin could not open this tender page (timeout or blocked). Confirm details on the official CPPP notice.</p><small>${error.message}</small></div>`;
+  }
 }
 
 async function translateWorkspace() {
@@ -68,7 +122,7 @@ async function translateWorkspace() {
     return;
   }
   notice.textContent = "Translating with Sarvam...";
-  const result = await requestJson("/api/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: workspace.summary, target_language_code: activeLanguage }) });
+  const result = await trpcMutate("sarvam.translate", { text: workspace.summary, target_language_code: activeLanguage });
   document.getElementById("plainBrief").textContent = result.translated_text;
   notice.textContent = result.provider === "sarvam" ? "Translated by Sarvam." : result.notice;
   document.querySelectorAll(".language-button").forEach((button) => button.classList.toggle("active", button.dataset.language === activeLanguage));
@@ -83,7 +137,7 @@ async function refreshCatalog() {
   const button = document.getElementById("refreshButton");
   button.disabled = true;
   try {
-    const result = await requestJson("/api/refresh", { method: "POST" });
+    const result = await trpcMutate("tenders.refresh");
     document.getElementById("watchSummary").textContent = result.snapshot.changed ? `${result.snapshot.new_tenders} listing changes found` : "No catalog changes found";
     await loadCatalog();
   } catch (error) {

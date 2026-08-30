@@ -1,0 +1,17 @@
+{
+  "name": "@repo/trpc",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./server/index.js",
+  "exports": {
+    ".": "./server/index.js",
+    "./client": "./client/index.js",
+    "./server": "./server/index.js"
+  },
+  "dependencies": {
+    "@anakin-io/sdk": "^0.1.0",
+    "@trpc/client": "^11.8.1",
+    "@trpc/server": "^11.8.1",
+    "zod": "^3.25.76"
+  }
+}

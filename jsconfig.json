@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "checkJs": false,
+    "allowJs": true,
+    "strict": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "noEmit": true
+  },
+  "exclude": ["node_modules", "apps/web", "data"]
+}

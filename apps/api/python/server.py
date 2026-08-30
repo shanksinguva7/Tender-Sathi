@@ -13,10 +13,11 @@ import truststore
 
 truststore.inject_into_ssl()
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[3]
+WEB_DIR = ROOT / "apps" / "web"
 DATA_DIR = ROOT / "data"
 SNAPSHOT_FILE = DATA_DIR / "cppp-snapshot.json"
-LISTING_FILES = [ROOT / "active-tenders.md", ROOT / "active-tenders-page-2.md", ROOT / "active-tenders-page-3.md"]
+LISTING_FILES = [DATA_DIR / "active-tenders.md", DATA_DIR / "active-tenders-page-2.md", DATA_DIR / "active-tenders-page-3.md"]
 CPP_URL = "https://eprocure.gov.in/cppp/latestactivetendersnew"
 DETAIL_PATTERN = re.compile(r'\[([^\]]+)\]\((https://eprocure\.gov\.in/cppp/tendersfullview/[^\s)]+)\s+"External Url"\)/([^/\r\n]+)/([^\r\n]+?)(?=--\d+\.|\r?\n\r?\n|$)')
 
@@ -85,14 +86,14 @@ def sarvam_client():
 
 @app.get("/")
 def home():
-    return send_from_directory(ROOT, "index.html")
+    return send_from_directory(WEB_DIR, "index.html")
 
 
 @app.get("/<path:asset>")
 def static_asset(asset: str):
     if asset not in {"app.js", "styles.css"}:
         return jsonify({"error": "Not found"}), 404
-    return send_from_directory(ROOT, asset)
+    return send_from_directory(WEB_DIR, asset)
 
 
 @app.get("/api/tenders")
