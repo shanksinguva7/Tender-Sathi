@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TenderSathi | Tender Navigator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="TenderSathi home"><span>TS</span>TenderSathi</a>
+      <div class="source-status"><i></i> CPPP live catalog <span id="lastUpdated">Cached Aug 30, 2026</span></div>
+      <button class="icon-button" id="refreshButton" title="Refresh catalog and check for changes" aria-label="Refresh catalog">↻</button>
+    </header>
+
+    <main id="top">
+      <section class="intro">
+        <p class="eyebrow">Government tender navigator</p>
+        <h1>Find the tender.<br /><em>Know the next move.</em></h1>
+        <p class="intro-copy">A clear starting point for small businesses. Browse active tenders, understand the essentials, and keep an eye on official changes.</p>
+        <div class="source-pills"><span>Central Public Procurement Portal</span><span>20 active tenders loaded</span></div>
+      </section>
+
+      <section class="catalog-shell" aria-label="Tender catalog">
+        <aside class="filter-panel">
+          <div>
+            <p class="panel-label">Catalog</p>
+            <h2>Active tenders</h2>
+          </div>
+          <label class="search-field">Search tenders<input id="searchInput" type="search" placeholder="Title or tender ID" /></label>
+          <label class="select-field">Source<select id="sourceFilter"><option value="all">All supported sources</option><option value="cppp">Central Government (CPPP)</option></select></label>
+          <label class="select-field">Sort by<select id="sortSelect"><option value="source">Source order</option><option value="title">Tender title</option></select></label>
+          <div class="watch-mini"><span class="watch-dot"></span><div><strong id="watchSummary">Change watch armed</strong><small>Next refresh checks saved catalog snapshots.</small></div></div>
+        </aside>
+
+        <div class="catalog-main">
+          <div class="catalog-header"><p id="resultCount">Loading tenders...</p><p>Official source: eprocure.gov.in</p></div>
+          <div id="tenderGrid" class="tender-grid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="workspace" class="workspace" hidden>
+        <div class="workspace-heading">
+          <div><p class="eyebrow">Tender workspace</p><h2 id="detailTitle"></h2><p id="detailMeta"></p></div>
+          <a id="officialLink" class="official-link" target="_blank" rel="noreferrer">Open official tender <span>↗</span></a>
+        </div>
+
+        <div class="workspace-grid">
+          <article class="brief-panel">
+            <div class="tab-row" role="tablist"><button class="language-button active" data-language="en-IN">English</button><button class="language-button" data-language="kn-IN">ಕನ್ನಡ</button><button class="language-button" data-language="hi-IN">हिंदी</button><button class="listen-button" id="listenButton" title="Read tender summary aloud" aria-label="Read tender summary aloud">⌁</button></div>
+            <p class="panel-label">Plain-language brief</p>
+            <p id="plainBrief" class="plain-brief"></p>
+            <p id="translationNotice" class="guidance"></p>
+            <div class="facts"><div><span>Source</span><strong>CPPP central portal</strong></div><div><span>Tender ID</span><strong id="detailId"></strong></div><div><span>Status</span><strong>Active listing</strong></div></div>
+          </article>
+
+          <article class="checklist-panel">
+            <div class="panel-title"><div><p class="panel-label">Bid preparation</p><h3>Your working checklist</h3></div><span class="progress" id="progressText">0/4</span></div>
+            <div id="checklist" class="checklist"></div>
+            <p class="guidance">Guidance only. Confirm every requirement, value, and deadline on the official tender page before submission.</p>
+          </article>
+
+          <article class="proposal-panel">
+            <p class="panel-label">Response outline</p><textarea id="proposalOutline" aria-label="Editable bid response outline"></textarea>
+          </article>
+
+          <article class="document-panel">
+            <p class="panel-label">Document digitization</p>
+            <h3>Extract tender documents</h3>
+            <p>Upload an official PDF or image to send it to Sarvam Document AI.</p>
+            <form id="digitiseForm"><input id="documentInput" type="file" accept=".pdf,image/*" /><button type="submit" class="document-action">Digitize document</button></form>
+            <p id="digitiseStatus" class="guidance"></p>
+            <div id="documentList" class="document-list"></div>
+          </article>
+
+          <article class="change-panel">
+            <div class="panel-title"><div><p class="panel-label">Tender Change Watch</p><h3>Official update monitor</h3></div><span class="status-chip" id="changeStatus">Watching</span></div>
+            <div id="changeContent" class="change-content"><div class="empty-watch"><span>◌</span><p>No catalog changes found in this browser yet.</p><small>Refresh checks this tender against the latest saved CPPP listing snapshot.</small></div></div>
+          </article>
+        </div>
+      </section>
+    </main>
+    <template id="cardTemplate"><article class="tender-card"><button class="card-open"><span class="card-source">CPPP · Central</span><h3></h3><p class="card-id"></p><span class="open-mark">Open workspace →</span></button><a class="card-link" target="_blank" rel="noreferrer">Official page ↗</a></article></template>
+    <script src="app.js"></script>
+  </body>
+</html>
