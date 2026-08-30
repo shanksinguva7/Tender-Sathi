@@ -16,3 +16,73 @@ main { max-width:1320px; margin:auto; }.intro { padding:82px 0 62px; max-width:8
 @media (max-width:900px) { main { padding:0 20px; }.intro { padding:58px 0 44px; }.tender-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }.workspace-grid { grid-template-columns:1fr; }.topbar { padding:0 20px; }.source-status span { display:none; } }
 @media (max-width:620px) { .source-status { display:none; }.catalog-shell { grid-template-columns:1fr; }.filter-panel { padding:24px 0; border-right:0; border-bottom:1px solid var(--line); }.catalog-main { padding:20px 0 34px; }.tender-grid { grid-template-columns:1fr; }.workspace-heading { align-items:start; flex-direction:column; }.facts { grid-template-columns:1fr; }.card-open h3 { min-height:auto; }.workspace-heading h2 { font-size:28px; } }
 .document-panel h3 { margin:0; font:700 20px Fraunces,serif; }.document-panel > p:not(.panel-label) { color:#60716b; font-size:12px; line-height:1.5; }.document-panel form { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }.document-panel input { max-width:100%; font-size:11px; }.document-action { padding:8px 10px; color:var(--ink); border:1px solid var(--ink); border-radius:3px; background:var(--acid); font-weight:700; font-size:11px; }.document-list { margin-top:16px; border-top:1px solid var(--line); }.document-list a { display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); color:#3f6556; font-size:11px; text-decoration:none; }.document-list span,.checklist small { display:block; margin-top:3px; color:#788782; font-size:10px; }
+/* ---- readiness check input ---- */
+.check-form {
+  display: flex;
+  gap: 10px;
+  margin: 22px 0 18px;
+  max-width: 640px;
+  flex-wrap: wrap;
+}
+.check-form input {
+  flex: 1 1 320px;
+  padding: 13px 16px;
+  border: 1px solid rgba(20, 20, 25, 0.18);
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+}
+.check-form input:focus {
+  outline: 2px solid rgba(40, 80, 200, 0.35);
+  outline-offset: 1px;
+}
+.check-form button {
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 10px;
+  background: #16181d;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check-form button:hover { background: #2c313a; }
+
+/* ---- checklist rows: found vs missing ---- */
+.check-row {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border-radius: 9px;
+  border: 1px solid rgba(20, 20, 25, 0.1);
+  margin-bottom: 8px;
+  background: #fff;
+}
+.check-row span { display: flex; flex-direction: column; gap: 3px; }
+.check-row strong { font-size: 0.9rem; font-weight: 600; }
+.check-row em { font-style: normal; font-size: 0.88rem; line-height: 1.45; }
+.check-row small { font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.6; }
+.check-row.found { border-left: 3px solid #2e7d52; }
+.check-row.missing { border-left: 3px solid #c2701c; background: #fdf8f1; }
+.check-row.missing em { opacity: 0.85; }
+
+/* ---- pipeline trace ---- */
+.stage-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.stage-list li {
+  font-size: 0.83rem;
+  line-height: 1.45;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: rgba(20, 20, 25, 0.04);
+}
+.stage-list li strong { display: block; font-family: "DM Mono", ui-monospace, monospace; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.stage-list .stage-ok { border-left: 3px solid #2e7d52; }
+.stage-list .stage-bad { border-left: 3px solid #c2701c; }
+.check-form .ghost-button {
+  background: transparent;
+  color: #16181d;
+  border: 1px solid rgba(20, 20, 25, 0.22);
+  font-weight: 500;
+}
+.check-form .ghost-button:hover { background: rgba(20, 20, 25, 0.05); }

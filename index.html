@@ -20,8 +20,15 @@
       <section class="intro">
         <p class="eyebrow">Government tender navigator</p>
         <h1>Find the tender.<br /><em>Know the next move.</em></h1>
-        <p class="intro-copy">A clear starting point for small businesses. Browse active tenders, understand the essentials, and keep an eye on official changes.</p>
-        <div class="source-pills"><span>Central Public Procurement Portal</span><span>20 active tenders loaded</span></div>
+        <p class="intro-copy">Paste one government tender link — or upload the notice PDF — and get a plain-language submission checklist in your own language, with a spoken summary.</p>
+
+        <form id="checkForm" class="check-form">
+          <input id="urlInput" type="url" placeholder="Paste a tender URL from eprocure.gov.in" aria-label="Tender URL" />
+          <button type="submit">Check readiness</button>
+          <button type="button" id="sampleButton" class="ghost-button">Try a sample notice</button>
+        </form>
+
+        <div class="source-pills"><span>Central Public Procurement Portal</span><span>Or pick a live tender below</span></div>
       </section>
 
       <section class="catalog-shell" aria-label="Tender catalog">
@@ -58,27 +65,27 @@
           </article>
 
           <article class="checklist-panel">
-            <div class="panel-title"><div><p class="panel-label">Bid preparation</p><h3>Your working checklist</h3></div><span class="progress" id="progressText">0/4</span></div>
+            <div class="panel-title"><div><p class="panel-label">Bid preparation</p><h3>Submission checklist</h3></div><span class="progress" id="progressText">0/10</span></div>
             <div id="checklist" class="checklist"></div>
-            <p class="guidance">Guidance only. Confirm every requirement, value, and deadline on the official tender page before submission.</p>
+            <p class="guidance">Guidance only. Anything marked <em>confirm on official page</em> was not published in the scraped notice — verify it before submitting.</p>
           </article>
 
           <article class="proposal-panel">
-            <p class="panel-label">Response outline</p><textarea id="proposalOutline" aria-label="Editable bid response outline"></textarea>
+            <p class="panel-label">Still to confirm</p><textarea id="proposalOutline" aria-label="Outstanding items to confirm"></textarea>
           </article>
 
           <article class="document-panel">
-            <p class="panel-label">Document digitization</p>
-            <h3>Extract tender documents</h3>
-            <p>Upload an official PDF or image to send it to Sarvam Document AI.</p>
-            <form id="digitiseForm"><input id="documentInput" type="file" accept=".pdf,image/*" /><button type="submit" class="document-action">Digitize document</button></form>
+            <p class="panel-label">PDF path</p>
+            <h3>Upload a tender notice</h3>
+            <p>Scanned or digital PDF, read by Sarvam Document AI.</p>
+            <form id="digitiseForm"><input id="documentInput" type="file" accept=".pdf,image/*" /><button type="submit" class="document-action">Check this PDF</button></form>
             <p id="digitiseStatus" class="guidance"></p>
             <div id="documentList" class="document-list"></div>
           </article>
 
           <article class="change-panel">
-            <div class="panel-title"><div><p class="panel-label">Tender Change Watch</p><h3>Official update monitor</h3></div><span class="status-chip" id="changeStatus">Watching</span></div>
-            <div id="changeContent" class="change-content"><div class="empty-watch"><span>◌</span><p>No catalog changes found in this browser yet.</p><small>Refresh checks this tender against the latest saved CPPP listing snapshot.</small></div></div>
+            <div class="panel-title"><div><p class="panel-label">Pipeline trace</p><h3>What ran, what degraded</h3></div><span class="status-chip" id="changeStatus">Watching</span></div>
+            <div id="changeContent" class="change-content"></div>
           </article>
         </div>
       </section>
