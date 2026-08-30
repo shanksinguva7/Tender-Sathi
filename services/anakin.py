@@ -41,8 +41,13 @@ def _write_cache(url: str, payload: dict) -> None:
 def _local_batches(url: str):
     """Pre-scraped Anakin batch jobs committed in the repo (demo fallback)."""
     root = Path(__file__).parent.parent
-    for name in ("tender-details-batch-1.md", "tender-details-batch-2.md"):
-        path = root / name
+    candidates = [
+        root / "tender-details-batch-1.md",
+        root / "tender-details-batch-2.md",
+        root / "data" / "tender-details-batch-1.md",
+        root / "data" / "tender-details-batch-2.md",
+    ]
+    for path in candidates:
         if not path.exists():
             continue
         try:

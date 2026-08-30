@@ -17,6 +17,9 @@ LISTING_FILES = [
     ROOT / "active-tenders.md",
     ROOT / "active-tenders-page-2.md",
     ROOT / "active-tenders-page-3.md",
+    ROOT / "data" / "active-tenders.md",
+    ROOT / "data" / "active-tenders-page-2.md",
+    ROOT / "data" / "active-tenders-page-3.md",
 ]
 LISTING_PATTERN = re.compile(
     r"\[([^\]]+)\]\((https://eprocure\.gov\.in/cppp/tendersfullview/[^\s)]+)\s+"

@@ -22,6 +22,9 @@ import pipeline
 from services import sarvam
 
 ROOT = Path(__file__).parent
+WEB_DIR = ROOT / "apps" / "web"
+if not (WEB_DIR / "index.html").exists():
+    WEB_DIR = ROOT
 CPP_URL = "https://eprocure.gov.in/cppp/latestactivetendersnew"
 STATIC_ASSETS = {"app.js", "styles.css"}
 
@@ -39,14 +42,14 @@ def handle_unexpected(error):
 
 @app.get("/")
 def home():
-    return send_from_directory(ROOT, "index.html")
+    return send_from_directory(WEB_DIR, "index.html")
 
 
 @app.get("/<path:asset>")
 def static_asset(asset: str):
     if asset not in STATIC_ASSETS:
         return jsonify({"error": "Not found"}), 404
-    return send_from_directory(ROOT, asset)
+    return send_from_directory(WEB_DIR, asset)
 
 
 @app.get("/api/tenders")

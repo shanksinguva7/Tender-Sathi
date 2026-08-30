@@ -9,17 +9,38 @@ line, not to a better price.
 
 ---
 
-## Run it locally
+## Layout
+
+```
+apps/web                 UI (index.html, app.js, styles.css)
+apps/api                 Express + tRPC (Anakin JS SDK path)
+apps/api/python          Flask server (same pipeline, monorepo paths)
+packages/trpc            JS routers: health, tenders, sarvam, anakin
+data                     scraped CPPP listings, snapshots, Anakin cache
+pipeline.py              orchestration + field extraction
+schema.py                10-field checklist contract
+services/anakin.py       Python Anakin scrape + search
+services/sarvam.py       Document AI, translate, TTS
+docs/anakin-pipeline.md  copy-paste text for the submission form
+```
+
+---
+
+## Run it — Node (tRPC + Anakin SDK)
+
+```bash
+copy .env.example .env
+pnpm install
+pnpm --filter @repo/api start
+```
+
+Open <http://127.0.0.1:4000>. Raw Anakin (no UI): `node apps/api/scripts/demo-anakin.js`
+
+## Run it — Python (Flask pipeline)
 
 ```bash
 git clone https://github.com/shanksinguva7/Tender-Sathi.git
-```
-
-```bash
 cd Tender-Sathi && python -m venv .venv && .venv/Scripts/python.exe -m pip install -r requirements.txt
-```
-
-```bash
 .venv/Scripts/python.exe server.py
 ```
 
@@ -35,7 +56,7 @@ export SARVAM_API_KEY=your_key    # Document AI, Translate, TTS
 export ANAKIN_API_KEY=your_key    # live URL scrape + contact search
 ```
 
-Check what's live at any time: <http://127.0.0.1:5000/api/health>
+Or put them in `.env`. Check what's live: <http://127.0.0.1:5000/api/health>
 
 ---
 
@@ -47,6 +68,7 @@ Check what's live at any time: <http://127.0.0.1:5000/api/health>
    Amber = **not published in the scraped notice, confirm on the official page**.
 4. Switch to हिंदी or ಕನ್ನಡ, then press the ⌁ button for the spoken summary.
 5. The **Pipeline trace** panel shows which stage ran and which degraded.
+6. The **Anakin.io** panel shows live scrape / search fallback + contacts.
 
 Example input for judges:
 
@@ -61,9 +83,9 @@ https://eprocure.gov.in/cppp/latestactivetendersnew
 ## Architecture
 
 ```
-tender URL ──► services/anakin.py ──┐
-                                    ├─► pipeline.run() ──► schema.TenderChecklist ──► frontend
-tender PDF ──► services/sarvam.py ──┘                            │
+tender URL ──► services/anakin.py + packages/trpc Anakin SDK ──┐
+                                                               ├─► pipeline.run() ──► schema.TenderChecklist ──► frontend
+tender PDF ──► services/sarvam.py ─────────────────────────────┘
                                                                  ├─► Sarvam Translate
                                                                  └─► Sarvam TTS (bulbul)
 ```
@@ -72,9 +94,11 @@ tender PDF ──► services/sarvam.py ──┘                            │
 |---|---|
 | `schema.py` | The one shared contract. 10 fields, each with value + source + found flag. |
 | `services/anakin.py` | URL scrape (live API → repo cache → direct fetch) + contact search. |
+| `packages/trpc/server/services/anakin.js` | Same Anakin path via official `@anakin-io/sdk`. |
 | `services/sarvam.py` | Document AI **with polling**, Translate (chunked), TTS. |
 | `pipeline.py` | Orchestration + field extraction. Stage-isolated; never raises. |
-| `server.py` | HTTP surface. Every route returns a degraded payload, never a bare 500. |
+| `server.py` | Flask HTTP surface. Every route returns a degraded payload, never a bare 500. |
+| `apps/api` | Express + tRPC surface for the JS Anakin/Sarvam path. |
 
 ### Where Sarvam.ai is used
 - **Document AI** — `services/sarvam.py:digitise()`, extracts fields from an uploaded
@@ -85,11 +109,13 @@ tender PDF ──► services/sarvam.py ──┘                            │
   the browser plays directly.
 
 ### Where Anakin.io is used
-- **URL Scraper** — `services/anakin.py:scrape()`, pulls the tender page as markdown.
-  Falls back through a local disk cache → the pre-scraped batch jobs committed in this
-  repo → a direct fetch, so a demo run never dead-ends.
-- **Search API** — `services/anakin.py:search_contact()`, finds the issuing department's
-  public contact page when the notice itself doesn't publish one.
+- **URL Scraper** — `services/anakin.py:scrape()` and JS `anakin.ingest` pull the tender
+  page as markdown. Falls back through a local disk cache → the pre-scraped batch jobs
+  committed in this repo → a direct fetch, so a demo run never dead-ends.
+- **Search API** — `services/anakin.py:search_contact()` and JS Search fallback find the
+  issuing department's public contact when the notice itself doesn't publish one.
+
+Submission form copy: `docs/anakin-pipeline.md`.
 
 ---
 
@@ -110,9 +136,7 @@ every field flagged rather than an error screen.
 
 - **No live portal auth.** CPPP tender-detail URLs carry a session token; scraping one
   cold returns the page shell only. The committed batch scrapes in
-  `tender-details-batch-*.md` show exactly this — all 20 came back as header markup
-  with no tender fields. Catalog-level data (title, ID, authority) is real and parsed
-  from the committed listings.
+  `tender-details-batch-*.md` / `data/tender-details-batch-*.md` show exactly this.
 - **URL and PDF input only.** No GeM/state-portal crawling, no CAPTCHA solving.
 - **Readiness check, not a filing tool.** It does not submit bids.
 - **Guidance, not legal advice.** The official tender page stays the source of truth.
