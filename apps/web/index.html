@@ -54,7 +54,7 @@
           <div><p class="eyebrow">Tender workspace</p><h2 id="detailTitle"></h2><p id="detailMeta"></p></div>
           <div class="workspace-actions">
             <button type="button" id="exportButton" class="export-button">Download Word summary</button>
-            <a id="officialLink" class="official-link" target="_blank" rel="noreferrer">Open official tender <span>↗</span></a>
+            <a id="officialLink" class="official-link" hidden target="_blank" rel="noreferrer">Open official tender <span>↗</span></a>
           </div>
         </div>
 
@@ -79,8 +79,8 @@
 
           <article class="document-panel">
             <p class="panel-label">PDF path</p>
-            <h3>Upload a tender notice</h3>
-            <p>Scanned or digital PDF, read by Sarvam Document AI.</p>
+            <h3>Extract the notice here</h3>
+            <p>Do not leave this app for CPPP search. Upload the tender PDF — we fill the checklist, translate it, and read it aloud.</p>
             <form id="digitiseForm"><input id="documentInput" type="file" accept=".pdf,image/*" /><button type="submit" class="document-action">Check this PDF</button></form>
             <p id="digitiseStatus" class="guidance"></p>
             <div id="documentList" class="document-list"></div>
@@ -93,7 +93,7 @@
         </div>
       </section>
     </main>
-    <template id="cardTemplate"><article class="tender-card"><button class="card-open"><span class="card-source">CPPP · Central</span><h3></h3><p class="card-id"></p><span class="open-mark">Open workspace →</span></button><a class="card-link" target="_blank" rel="noreferrer">Official page ↗</a></article></template>
+    <template id="cardTemplate"><article class="tender-card"><button class="card-open"><span class="card-source">CPPP · Central</span><h3></h3><p class="card-id"></p><span class="open-mark">Check in TenderSathi →</span></button></article></template>
     <script src="app.js"></script>
   </body>
 </html>

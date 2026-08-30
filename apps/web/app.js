@@ -35,8 +35,52 @@ async function requestJson(url, options) {
   return body;
 }
 
+const CPP_LISTING = "https://eprocure.gov.in/cppp/latestactivetendersnew";
+
 function tenderUrl(tender) {
   return tender.url || tender.source_url || "";
+}
+
+function usableOfficialUrl(url) {
+  if (!url || url === "#" || url === CPP_LISTING) return "";
+  if (url.includes("/cppp/tendersfullview/")) return "";
+  if (url.includes("eprocure.gov.in/cppp/latestactivetenders")) return "";
+  return url;
+}
+
+function setOfficialLink(url) {
+  const link = byId("officialLink");
+  const href = usableOfficialUrl(url);
+  link.hidden = !href;
+  if (href) link.href = href;
+}
+
+function documentsFromChecklist(result) {
+  const required = result.fields?.required_documents;
+  if (required?.found && Array.isArray(required.value) && required.value.length) {
+    return required.value.map((name) => ({
+      name,
+      state: "Found in the notice — stays in this workspace",
+    }));
+  }
+  return [
+    { name: "Notice PDF", state: "Upload above. We extract specs, BOQ, EMD, and deadlines here." },
+  ];
+}
+
+function renderDocuments(documents) {
+  const host = byId("documentList");
+  if (!documents?.length) {
+    host.innerHTML = "";
+    return;
+  }
+  host.innerHTML = documents
+    .map((document) => {
+      const name = escapeHtml(document.name);
+      const state = escapeHtml(document.state);
+      return `<p class="document-row">${name}<span>${state}</span></p>`;
+    })
+    .join("");
 }
 
 async function loadCatalog() {
@@ -70,12 +114,10 @@ function renderCatalog() {
   grid.innerHTML = "";
   visible.forEach((tender) => {
     const card = template.content.cloneNode(true);
-    const url = tenderUrl(tender);
     card.querySelector(".card-source").textContent = "CPPP · Central Government";
     card.querySelector("h3").textContent = tender.title;
     card.querySelector(".card-id").textContent = `Tender ID: ${tender.id}`;
     card.querySelector(".card-open").addEventListener("click", () => openTender(tender));
-    card.querySelector(".card-link").href = url;
     grid.appendChild(card);
   });
   byId("resultCount").textContent = `${visible.length} active tender${visible.length === 1 ? "" : "s"}`;
@@ -90,6 +132,9 @@ function setBusy(message) {
   byId("checklist").innerHTML = "";
   byId("plainBrief").textContent = "";
   byId("changeStatus").textContent = "Running";
+  byId("documentList").innerHTML = "";
+  byId("digitiseStatus").textContent = "";
+  setOfficialLink("");
   byId("workspace").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -115,7 +160,7 @@ async function checkUrl(url, tender) {
       await openWorkspaceTrpc(tender.id);
       return;
     }
-    byId("detailTitle").textContent = "Could not check that tender. Confirm the URL on the official page.";
+    byId("detailTitle").textContent = "CPPP blocked that page (captcha / expired link). Upload the notice PDF here instead.";
   }
 }
 
@@ -125,14 +170,12 @@ async function openWorkspaceTrpc(tenderId) {
   byId("detailTitle").textContent = workspace.title;
   byId("detailMeta").textContent = workspace.authority;
   byId("detailId").textContent = workspace.id;
-  byId("officialLink").href = workspace.source_url;
+  setOfficialLink("");
   byId("proposalOutline").value = (workspace.response_outline || []).join("\n");
   byId("checklist").innerHTML = (workspace.requirements || [])
     .map((item) => `<label><input type="checkbox" /><span>${item.label}<small>${item.source}</small></span></label>`)
     .join("");
-  byId("documentList").innerHTML = (workspace.documents || [])
-    .map((document) => `<a href="${document.url}" target="_blank" rel="noreferrer">${document.name}<span>${document.state} ↗</span></a>`)
-    .join("");
+  renderDocuments(workspace.documents);
   document.querySelectorAll("#checklist input").forEach((input) => input.addEventListener("change", updateProgress));
   updateProgress();
   await translateBrief();
@@ -159,7 +202,8 @@ function renderChecklist(result) {
   byId("detailTitle").textContent = fields.tender_title.found ? fields.tender_title.value : "Tender notice";
   byId("detailMeta").textContent = fields.issuing_authority.found ? fields.issuing_authority.value : "Issuing department not published";
   byId("detailId").textContent = fields.tender_id.found ? fields.tender_id.value : "Not found";
-  byId("officialLink").href = result.source_url || "#";
+  setOfficialLink(result.source_url);
+  renderDocuments(documentsFromChecklist(result));
   byId("progressText").textContent = `${result.found_count}/${result.total_count}`;
 
   byId("checklist").innerHTML = Object.entries(fields)

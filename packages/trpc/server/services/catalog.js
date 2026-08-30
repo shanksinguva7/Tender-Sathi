@@ -4,6 +4,13 @@ const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("node:fs"
 const { resolve } = require("node:path");
 
 const CPP_URL = "https://eprocure.gov.in/cppp/latestactivetendersnew";
+
+function officialBrowseUrl(url) {
+  if (typeof url === "string" && url.includes("/cppp/tendersfullview/")) {
+    return CPP_URL;
+  }
+  return url || CPP_URL;
+}
 const DETAIL_PATTERN =
   /\[([^\]]+)\]\((https:\/\/eprocure\.gov\.in\/cppp\/tendersfullview\/[^\s)]+)\s+"External Url"\)\/([^/\r\n]+)\/([^\r\n]+?)(?=--\d+\.|\r?\n\r?\n|$)/g;
 
@@ -61,7 +68,7 @@ function tenderWorkspace(tender) {
   return {
     ...tender,
     summary:
-      "This tender is listed as active on the Central Public Procurement Portal. Use the official tender page as the source of truth for all eligibility, financial, technical, document, and deadline requirements.",
+      "This tender is listed as active on CPPP. TenderSathi cannot open the government detail page (it is captcha-locked). Upload the official notice PDF here to extract eligibility, EMD, deadlines, and required documents.",
     requirements: [
       { label: "Read the official tender notice", source: "CPPP listing" },
       { label: "Confirm eligibility and prequalification criteria", source: "Official notice required" },
@@ -70,10 +77,9 @@ function tenderWorkspace(tender) {
       { label: "Confirm bid submission and opening deadlines", source: "Official notice required" },
     ],
     documents: [
-      { name: "Tender notice", state: "Open from official portal", url: tender.source_url },
-      { name: "Technical specification / scope", state: "Awaiting document extraction", url: tender.source_url },
-      { name: "BOQ / commercial schedule", state: "Awaiting document extraction", url: tender.source_url },
-      { name: "Corrigendum / amendment notices", state: "Watch on official portal", url: tender.source_url },
+      { name: "Tender notice PDF", state: "Upload it above — we extract the checklist here", url: "" },
+      { name: "Technical specification / BOQ", state: "Filled after the PDF is read", url: "" },
+      { name: "Corrigendum / amendments", state: "Mentioned in the notice if published", url: "" },
     ],
     response_outline: [
       "1. Understanding of requirement and scope",
@@ -122,4 +128,4 @@ function writeSnapshot() {
   };
 }
 
-module.exports = { listingTenders, tenderWorkspace, writeSnapshot };
+module.exports = { listingTenders, tenderWorkspace, writeSnapshot, officialBrowseUrl };
