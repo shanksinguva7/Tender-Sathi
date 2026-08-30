@@ -1,3 +1,7 @@
+<img width="609" height="348" alt="image (3)" src="https://github.com/user-attachments/assets/10ca3af0-48ef-411b-99f2-992a81eec0bd" />
+<img width="926" height="358" alt="image" src="https://github.com/user-attachments/assets/4ca03c68-9611-4829-b2d0-19d633f98f5c" />
+<img width="1097" height="578" alt="image (2)" src="https://github.com/user-attachments/assets/b97d4318-2234-4801-b54d-4cfe2073e118" />
+<img width="1114" height="632" alt="image (1)" src="https://github.com/user-attachments/assets/eb8c78c4-6e1f-4695-bbbe-5cb084b98eb8" />
 # TenderSathi — Tender Readiness Checker
 
 Paste one government tender link (or upload the notice PDF) and get a plain-language
