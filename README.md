@@ -47,6 +47,7 @@ Check what's live at any time: <http://127.0.0.1:5000/api/health>
    Amber = **not published in the scraped notice, confirm on the official page**.
 4. Switch to हिंदी or ಕನ್ನಡ, then press the ⌁ button for the spoken summary.
 5. The **Pipeline trace** panel shows which stage ran and which degraded.
+6. Press **Download Word summary** for a `.docx` of everything above.
 
 Example input for judges:
 
@@ -74,6 +75,8 @@ tender PDF ──► services/sarvam.py ──┘                            │
 | `services/anakin.py` | URL scrape (live API → repo cache → direct fetch) + contact search. |
 | `services/sarvam.py` | Document AI **with polling**, Translate (chunked), TTS. |
 | `pipeline.py` | Orchestration + field extraction. Stage-isolated; never raises. |
+| `attachments.py` | Stores uploads, renders PDF pages to PNG, reads the PDF text layer. |
+| `export_docx.py` | Builds the downloadable Word summary with `python-docx`. |
 | `server.py` | HTTP surface. Every route returns a degraded payload, never a bare 500. |
 
 ### Where Sarvam.ai is used
@@ -90,6 +93,32 @@ tender PDF ──► services/sarvam.py ──┘                            │
   repo → a direct fetch, so a demo run never dead-ends.
 - **Search API** — `services/anakin.py:search_contact()`, finds the issuing department's
   public contact page when the notice itself doesn't publish one.
+
+---
+
+## Word / Google Docs export
+
+**Download Word summary** builds a `.docx` containing the plain-language summary
+(in whichever language is selected), a full requirements table with the source of
+every extracted value, a **Before you bid** section listing everything that could
+not be extracted, and — when the input was an uploaded file — an image of every
+page the fields were read from.
+
+Built with `python-docx` into an in-memory buffer and streamed back by Flask, so
+nothing is written to disk and no data leaves the machine. The file opens natively
+in **Google Docs** (drag into Drive, or File - Open), Word, and LibreOffice.
+
+There is deliberately no Google Docs API integration: it would require OAuth, a
+Google Cloud project, and pushing tender data to a third party, for a file the
+user can open in Docs anyway.
+
+### PDF input without an API key
+
+Uploaded PDFs are read twice. Sarvam Document AI handles scanned notices. If no
+`SARVAM_API_KEY` is set — or the call fails — the pipeline falls back to the PDF's
+own text layer via PyMuPDF, which fills the whole checklist for any digitally
+generated notice. A genuinely scanned PDF has no text layer and still needs Sarvam;
+the trace panel says so explicitly rather than returning an empty checklist.
 
 ---
 

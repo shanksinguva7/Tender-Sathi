@@ -86,3 +86,35 @@ main { max-width:1320px; margin:auto; }.intro { padding:82px 0 62px; max-width:8
   font-weight: 500;
 }
 .check-form .ghost-button:hover { background: rgba(20, 20, 25, 0.05); }
+
+/* ---- Word export ---- */
+.workspace-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.export-button {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: #1f3a2e;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.export-button:hover { background: #2d5342; }
+.export-button:disabled { opacity: 0.55; cursor: default; }
+
+/* ---- Word export ---- */
+.workspace-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.export-button {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: #1f3a2e;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.export-button:hover { background: #2d5342; }
+.export-button:disabled { opacity: 0.55; cursor: default; }

@@ -167,7 +167,7 @@ def build_summary(checklist: TenderChecklist) -> str:
     return " ".join(lines)
 
 
-def run(input_type: str, input_ref: str, uploaded=None) -> dict:
+def run(input_type: str, input_ref: str, uploaded=None, attachment_token: str = "") -> dict:
     """The single orchestration entry point. Never raises."""
     checklist = TenderChecklist.blank(input_type, input_ref)
 
@@ -215,13 +215,34 @@ def run(input_type: str, input_ref: str, uploaded=None) -> dict:
             result = sarvam.digitise(uploaded.filename, uploaded.stream, uploaded.mimetype)
             checklist.stages["sarvam_docai"] = {"ok": result["ok"], "detail": result["detail"]}
             if result["ok"]:
-                checklist.set("tender_title", uploaded.filename.rsplit(".", 1)[0], "sarvam-docai")
                 extract_fields(checklist, result["text"], "sarvam-docai", "")
             else:
                 checklist.warnings.append("Document AI degraded - " + result["detail"])
         except Exception as error:
             checklist.stages["sarvam_docai"] = {"ok": False, "detail": "Document AI crashed: " + type(error).__name__}
             checklist.warnings.append("Document AI stage crashed; continuing.")
+
+        # Fallback: a digital PDF carries its own text layer, so the checklist
+        # still fills in when Document AI is unavailable. Scans yield nothing
+        # here and genuinely need Sarvam.
+        if not any(f.found for f in checklist.fields.values()):
+            try:
+                import attachments
+
+                text = attachments.extract_text(attachment_token)
+                if text.strip():
+                    extract_fields(checklist, text, "pdf-text-layer", "")
+                    checklist.stages["pdf_text"] = {"ok": True, "detail": "read the PDF's own text layer"}
+                else:
+                    checklist.stages["pdf_text"] = {
+                        "ok": False,
+                        "detail": "no text layer - this looks scanned, so Document AI is required",
+                    }
+            except Exception as error:
+                checklist.stages["pdf_text"] = {"ok": False, "detail": "text-layer read failed: " + type(error).__name__}
+
+        # Last resort so the document is at least identifiable.
+        checklist.set("tender_title", uploaded.filename.rsplit(".", 1)[0], "uploaded filename")
 
     # Stage 3 - Anakin Search contact enrichment, only if contact is still missing.
     if not checklist.fields["contact"].found:
