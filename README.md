@@ -19,6 +19,8 @@ packages/trpc            JS routers: health, tenders, sarvam, anakin
 data                     scraped CPPP listings, snapshots, Anakin cache
 pipeline.py              orchestration + field extraction
 schema.py                10-field checklist contract
+export_docx.py           builds the downloadable Word summary
+attachments.py           stores uploads, renders PDF pages, reads text layer
 services/anakin.py       Python Anakin scrape + search
 services/sarvam.py       Document AI, translate, TTS
 docs/anakin-pipeline.md  copy-paste text for the submission form
@@ -69,6 +71,7 @@ Or put them in `.env`. Check what's live: <http://127.0.0.1:5000/api/health>
 4. Switch to हिंदी or ಕನ್ನಡ, then press the ⌁ button for the spoken summary.
 5. The **Pipeline trace** panel shows which stage ran and which degraded.
 6. The **Anakin.io** panel shows live scrape / search fallback + contacts.
+7. Press **Download Word summary** for a `.docx` of everything above.
 
 Example input for judges:
 
@@ -116,6 +119,32 @@ tender PDF ──► services/sarvam.py ─────────────�
   issuing department's public contact when the notice itself doesn't publish one.
 
 Submission form copy: `docs/anakin-pipeline.md`.
+
+---
+
+## Word / Google Docs export
+
+**Download Word summary** builds a `.docx` containing the plain-language summary
+(in whichever language is selected), a full requirements table with the source of
+every extracted value, a **Before you bid** section listing everything that could
+not be extracted, and — when the input was an uploaded file — an image of every
+page the fields were read from.
+
+Built with `python-docx` into an in-memory buffer and streamed by Flask, so
+nothing is written to disk and no data leaves the machine. The file opens natively
+in **Google Docs** (drag into Drive, or File - Open), Word, and LibreOffice.
+
+There is deliberately no Google Docs API integration: it would require OAuth, a
+Google Cloud project, and pushing tender data to a third party, for a file the
+user can open in Docs anyway.
+
+### PDF input without an API key
+
+Uploaded PDFs are read twice. Sarvam Document AI handles scanned notices. If no
+`SARVAM_API_KEY` is set — or the call fails — the pipeline falls back to the PDF's
+own text layer via PyMuPDF, which fills the whole checklist for any digitally
+generated notice. A genuinely scanned PDF has no text layer and still needs Sarvam;
+the trace panel says so explicitly rather than returning an empty checklist.
 
 ---
 

@@ -3,3 +3,5 @@ sarvamai==0.1.31a4
 anakin-cli==0.2.0
 truststore==0.10.4
 requests==2.32.5
+python-docx==1.2.0
+pymupdf==1.28.2

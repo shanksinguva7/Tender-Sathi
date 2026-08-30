@@ -53,3 +53,4 @@ Thumbs.db
 .cursor/
 .vscode/
 !.vscode/extensions.json
+data/uploads/
