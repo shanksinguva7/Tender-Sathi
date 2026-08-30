@@ -405,6 +405,45 @@ byId("checkForm").addEventListener("submit", (event) => {
   const url = byId("urlInput").value.trim();
   if (url) checkUrl(url);
 });
+byId("exportButton").addEventListener("click", async () => {
+  if (!checklist) return;
+  const button = byId("exportButton");
+  const label = button.textContent;
+  button.disabled = true;
+  button.textContent = "Building document...";
+  try {
+    const languageButton = document.querySelector(".language-button.active");
+    const response = await fetch("/api/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        checklist,
+        attachment_token: checklist.attachment_token || "",
+        summary: byId("plainBrief").textContent,
+        language_label: languageButton ? languageButton.textContent : "English",
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || "Export failed");
+    }
+    const blob = await response.blob();
+    const name = (response.headers.get("Content-Disposition") || "").match(/filename="?([^";]+)"?/);
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = name ? name[1] : "tender-readiness-summary.docx";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    byId("translationNotice").textContent = `Export failed: ${error.message}`;
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+});
+
 byId("sampleButton").addEventListener("click", async () => {
   setBusy("Running the bundled sample notice through the extractor...");
   try {
