@@ -6,8 +6,11 @@ codes against. Never raises: every function returns a payload with `ok`.
 from __future__ import annotations
 
 import base64
+import json
 import os
 import time
+import urllib.error
+import urllib.request
 
 POLL_ATTEMPTS = 10
 POLL_SLEEP = 2
@@ -93,15 +96,29 @@ def translate(text: str, target: str) -> dict:
 def speak(text: str, language: str) -> dict:
     """Sarvam bulbul TTS -> base64 wav the browser can play directly."""
     out = {"stage": "sarvam.tts", "ok": False, "audio_base64": "", "detail": ""}
-    sarvam = client()
-    if sarvam is None:
+    api_key = os.environ.get("SARVAM_API_KEY")
+    if not api_key:
         out["detail"] = "SARVAM_API_KEY not set - browser voice used instead"
         return out
     try:
-        result = sarvam.text_to_speech.convert(
-            text=text[:1500], target_language_code=language, model="bulbul:v2", speaker="anushka"
+        payload = json.dumps({
+            "text": text[:1500],
+            "language_code": language or "en-IN",
+            "model": "bulbul:v3",
+            "speaker": "shubh",
+        }).encode("utf-8")
+        request = urllib.request.Request(
+            "https://api.sarvam.ai/text-to-speech",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "api-subscription-key": api_key,
+            },
+            method="POST",
         )
-        audios = getattr(result, "audios", None) or []
+        with urllib.request.urlopen(request, timeout=30) as response:
+            body = json.loads(response.read().decode("utf-8"))
+        audios = body.get("audios") or []
         if audios:
             raw = audios[0]
             out.update(
@@ -111,6 +128,8 @@ def speak(text: str, language: str) -> dict:
             )
             return out
         out["detail"] = "Sarvam TTS returned no audio"
+    except urllib.error.HTTPError as error:
+        out["detail"] = f"Sarvam TTS unavailable: HTTP {error.code}"
     except Exception as error:
         out["detail"] = f"Sarvam TTS unavailable: {type(error).__name__}"
     return out

@@ -6,6 +6,7 @@ const express = require("express");
 const multer = require("multer");
 const trpcExpress = require("@trpc/server/adapters/express");
 const { createContext, serverRouter } = require("@repo/trpc/server");
+const { sarvamSpeak, sarvamTranslate } = require("../../../packages/trpc/server/services/sarvam");
 
 config({ path: resolve(__dirname, "../../../.env") });
 
@@ -26,6 +27,43 @@ app.use(express.json({ limit: "2mb" }));
 
 app.get("/health", (_req, res) => {
   res.json({ status: "healthy" });
+});
+
+app.post("/api/translate", async (req, res) => {
+  const text = String(req.body?.text || "").trim();
+  const target = String(req.body?.target_language_code || "en-IN");
+  if (!text) {
+    res.status(400).json({ error: "Text is required" });
+    return;
+  }
+  try {
+    const result = await sarvamTranslate(text, target);
+    res.json(result);
+  } catch (error) {
+    res.json({
+      translated_text: text,
+      provider: "offline",
+      notice: error instanceof Error ? error.message : "Sarvam translate failed",
+    });
+  }
+});
+
+app.post("/api/speak", async (req, res) => {
+  const text = String(req.body?.text || "").trim();
+  const language = String(req.body?.language || "en-IN");
+  if (!text) {
+    res.status(400).json({ error: "Text is required" });
+    return;
+  }
+  try {
+    res.json(await sarvamSpeak(text, language));
+  } catch (error) {
+    res.json({
+      ok: false,
+      audio_base64: "",
+      notice: error instanceof Error ? error.message : "Sarvam TTS failed",
+    });
+  }
 });
 
 app.post("/api/documents/digitise", upload.single("document"), async (req, res) => {

@@ -83,6 +83,7 @@ function renderCatalog() {
 }
 
 function setBusy(message) {
+  stopVoice();
   byId("workspace").hidden = false;
   byId("detailTitle").textContent = message;
   byId("detailMeta").textContent = "";
@@ -257,29 +258,117 @@ async function translateBrief() {
   }
 }
 
+const voiceCache = new Map();
+const voicePlayer = new Audio();
+let voiceToken = 0;
+let voiceState = "idle";
+
+function setVoiceUi(state, message) {
+  voiceState = state;
+  const play = byId("listenButton");
+  const stop = byId("stopButton");
+  const notice = byId("translationNotice");
+  play.disabled = state === "loading";
+  play.classList.toggle("active", state === "playing");
+  play.textContent = state === "playing" ? "❚❚" : "▶";
+  play.title = state === "playing" ? "Pause spoken summary" : "Play spoken summary";
+  stop.disabled = state === "idle" || state === "loading";
+  if (message) notice.textContent = message;
+}
+
+function stopVoice() {
+  voiceToken += 1;
+  voicePlayer.pause();
+  voicePlayer.removeAttribute("src");
+  voicePlayer.load();
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  setVoiceUi("idle", "Voice stopped.");
+}
+
+voicePlayer.addEventListener("ended", () => {
+  if (voiceState === "playing") setVoiceUi("idle", "Spoken by Sarvam bulbul");
+});
+voicePlayer.addEventListener("pause", () => {
+  if (voiceState === "playing" && !voicePlayer.ended) setVoiceUi("paused", "Paused.");
+});
+voicePlayer.addEventListener("play", () => {
+  setVoiceUi("playing", "Spoken by Sarvam bulbul");
+});
+
+async function playSarvamClip(base64) {
+  voicePlayer.src = `data:audio/wav;base64,${base64}`;
+  await voicePlayer.play();
+}
+
 async function speakBrief() {
   const text = byId("plainBrief").textContent.trim();
-  if (!text) return;
   const notice = byId("translationNotice");
+  if (!text) {
+    notice.textContent = "Nothing to read yet. Open a tender first.";
+    return;
+  }
+
+  if (voiceState === "loading") return;
+  if (voiceState === "playing") {
+    voicePlayer.pause();
+    if ("speechSynthesis" in window) speechSynthesis.pause();
+    setVoiceUi("paused", "Paused.");
+    return;
+  }
+  if (voiceState === "paused") {
+    try {
+      await voicePlayer.play();
+      setVoiceUi("playing", "Spoken by Sarvam bulbul");
+    } catch {
+      if ("speechSynthesis" in window) speechSynthesis.resume();
+      setVoiceUi("playing", "Windows voice resumed.");
+    }
+    return;
+  }
+
+  const cacheKey = `${activeLanguage}::${text}`;
+  const token = ++voiceToken;
+  setVoiceUi("loading", "Loading Sarvam voice...");
+
   try {
-    const result = await requestJson("/api/speak", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, language: activeLanguage }),
-    });
-    if (result.ok && result.audio_base64) {
-      new Audio(`data:audio/wav;base64,${result.audio_base64}`).play();
-      notice.textContent = result.notice;
+    let audio = voiceCache.get(cacheKey);
+    if (!audio) {
+      let result = null;
+      try {
+        result = await requestJson("/api/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, language: activeLanguage }),
+        });
+      } catch {
+        result = await trpcMutate("sarvam.speak", { text, language: activeLanguage });
+      }
+      if (token !== voiceToken) return;
+      if (result?.ok && result.audio_base64) {
+        audio = result.audio_base64;
+        voiceCache.set(cacheKey, audio);
+      } else {
+        throw new Error(result?.notice || "Sarvam TTS returned no audio");
+      }
+    }
+    if (token !== voiceToken) return;
+    await playSarvamClip(audio);
+    if (token !== voiceToken) return;
+    setVoiceUi("playing", "Spoken by Sarvam bulbul");
+  } catch (error) {
+    if (token !== voiceToken) return;
+    if ("speechSynthesis" in window) {
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = activeLanguage;
+      utterance.onend = () => {
+        if (token === voiceToken) setVoiceUi("idle", "Windows voice finished.");
+      };
+      speechSynthesis.speak(utterance);
+      setVoiceUi("playing", `Sarvam unavailable. Windows voice: ${error.message}`);
       return;
     }
-    notice.textContent = result.notice;
-  } catch (error) {
-    notice.textContent = `Sarvam voice unavailable: ${error.message}`;
-  }
-  if ("speechSynthesis" in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = activeLanguage;
-    speechSynthesis.speak(utterance);
+    setVoiceUi("idle", `Sarvam voice unavailable: ${error.message}`);
   }
 }
 
@@ -335,12 +424,19 @@ byId("digitiseForm").addEventListener("submit", (event) => {
 });
 document.querySelectorAll(".language-button").forEach((button) =>
   button.addEventListener("click", () => {
+    stopVoice();
     activeLanguage = button.dataset.language;
     translateBrief().catch((error) => {
       byId("translationNotice").textContent = error.message;
     });
   })
 );
-byId("listenButton").addEventListener("click", speakBrief);
+byId("listenButton").addEventListener("click", () => {
+  speakBrief().catch((error) => {
+    byId("translationNotice").textContent = error.message;
+  });
+});
+byId("stopButton").addEventListener("click", stopVoice);
+setVoiceUi("idle");
 
 loadCatalog();

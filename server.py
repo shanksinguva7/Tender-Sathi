@@ -5,9 +5,28 @@ readable message instead of a 500. The pipeline itself never raises.
 """
 from __future__ import annotations
 
+import os
 import traceback
 from datetime import UTC, datetime
 from pathlib import Path
+
+ROOT = Path(__file__).parent
+
+
+def _load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, _, value = stripped.partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+_load_dotenv(ROOT / ".env")
 
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -21,7 +40,6 @@ except Exception:
 import pipeline
 from services import sarvam
 
-ROOT = Path(__file__).parent
 WEB_DIR = ROOT / "apps" / "web"
 if not (WEB_DIR / "index.html").exists():
     WEB_DIR = ROOT

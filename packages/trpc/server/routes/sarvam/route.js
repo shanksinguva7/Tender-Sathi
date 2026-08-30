@@ -1,6 +1,7 @@
 // @ts-nocheck
 const { z } = require("zod");
 
+const { sarvamSpeak, sarvamTranslate } = require("../../services/sarvam");
 const { publicProcedure, router } = require("../../trpc");
 
 const sarvamRouter = router({
@@ -12,41 +13,32 @@ const sarvamRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      const apiKey = process.env.SARVAM_API_KEY;
-      if (!apiKey) {
-        return {
-          translated_text: input.text,
-          provider: "offline",
-          notice: "Set SARVAM_API_KEY on the server to enable live translation.",
-        };
-      }
-
       try {
-        const response = await fetch("https://api.sarvam.ai/translate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-subscription-key": apiKey,
-          },
-          body: JSON.stringify({
-            input: input.text,
-            source_language_code: "en-IN",
-            target_language_code: input.target_language_code,
-          }),
-        });
-        if (!response.ok) {
-          throw new Error(`Sarvam HTTP ${response.status}`);
-        }
-        const body = await response.json();
-        return {
-          translated_text: body.translated_text ?? input.text,
-          provider: "sarvam",
-        };
+        return await sarvamTranslate(input.text, input.target_language_code);
       } catch (error) {
         return {
           translated_text: input.text,
           provider: "offline",
-          notice: `Sarvam was unavailable: ${error instanceof Error ? error.name : "Error"}`,
+          notice: `Sarvam was unavailable: ${error instanceof Error ? error.message : "Error"}`,
+        };
+      }
+    }),
+
+  speak: publicProcedure
+    .input(
+      z.object({
+        text: z.string().min(1),
+        language: z.string().default("en-IN"),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        return await sarvamSpeak(input.text, input.language);
+      } catch (error) {
+        return {
+          ok: false,
+          audio_base64: "",
+          notice: `Sarvam TTS unavailable: ${error instanceof Error ? error.message : "Error"}`,
         };
       }
     }),
