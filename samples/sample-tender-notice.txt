@@ -1,0 +1,22 @@
+SAMPLE TENDER NOTICE — for demo and testing only.
+Field layout mirrors a real CPPP tender-detail page. Not a live tender.
+
+Organisation Name : Central Public Works Department
+Tender Reference Number : CPWD/EE/DELHI/2026-27/114
+Tender ID : 2026_CPWD_884512_1
+Work Description : Construction of boundary wall and site development at Kendriya Vidyalaya, Dwarka Sector-12, New Delhi
+Tender Type : Open Tender
+Tender Category : Works
+Tender Fee in Rs. : 1,000
+EMD Amount in Rs. : 2,45,000
+Bid Submission End Date : 12-Sep-2026 03:00 PM
+Bid Opening Date : 15-Sep-2026 11:00 AM
+Period Of Work : 180 days from date of award
+
+Pre Qualification Criteria : Contractor must be registered in Class-I with the Central Public Works Department, with a minimum of three years experience in similar civil works and an average annual turnover of Rs 2 crore in the last three financial years.
+
+Documents Required : NIT, BOQ, GST Registration, PAN Card, MSME Certificate, Experience Certificate, Solvency Certificate, Affidavit, Power of Attorney
+
+Nodal Officer Name : Sh. R. K. Sharma, Executive Engineer
+Contact Details : ee.delhi@cpwd.gov.in
+Address : CPWD Divisional Office, Sector 12, Dwarka, New Delhi 110078
